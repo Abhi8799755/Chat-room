@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Working Chat Room</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        #chat-container {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        #messages {
+            height: 400px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+        }
+        #message-form {
+            display: flex;
+            gap: 10px;
+        }
+        #message-input {
+            flex-grow: 1;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            padding: 8px 15px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        #invite-section {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 20px;
+        }
+        #invite-link {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-bottom: 10px;
+        }
+        .message {
+            margin-bottom: 10px;
+            padding: 8px;
+            background-color: #f9f9f9;
+            border-radius: 4px;
+        }
+        .message.sent {
+            background-color: #e2f3ff;
+            text-align: right;
+        }
+        .user-name {
+            font-weight: bold;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <h1>Working Chat Room</h1>
+    
+    <div id="chat-container">
+        <h2>Chat</h2>
+        <div id="messages"></div>
+        <form id="message-form">
+            <input type="text" id="message-input" placeholder="Type your message..." required>
+            <button type="submit">Send</button>
+        </form>
+    </div>
+    
+    <div id="invite-section">
+        <h2>Invite Friends</h2>
+        <input type="text" id="invite-link" readonly>
+        <button onclick="copyInviteLink()">Copy Invite Link</button>
+        <div id="user-info" style="margin-top: 10px;">
+            <label for="username">Your Name:</label>
+            <input type="text" id="username" placeholder="Enter your name">
+            <button onclick="setUsername()">Set Name</button>
+        </div>
+    </div>
+
+    <script>
+        // Generate a random room ID
+        let roomId = window.location.hash.substring(1);
+        if (!roomId) {
+            roomId = Math.random().toString(36).substring(2, 8);
+            window.location.hash = roomId;
+        }
+        
+        // Get or set username
+        let username = localStorage.getItem('chatUsername') || 'User-' + Math.random().toString(36).substring(2, 5);
+        document.getElementById('username').value = username;
+        
+        function setUsername() {
+            username = document.getElementById('username').value.trim() || username;
+            localStorage.setItem('chatUsername', username);
+            alert('Name set to: ' + username);
+        }
+        
+        // Set the invite link
+        const inviteLink = window.location.origin + window.location.pathname + '#' + roomId;
+        document.getElementById('invite-link').value = inviteLink;
+        
+        // Function to copy invite link
+        function copyInviteLink() {
+            const inviteLink = document.getElementById('invite-link');
+            inviteLink.select();
+            document.execCommand('copy');
+            alert('Invite link copied to clipboard!\n\nShare this link with friends:\n' + inviteLink.value);
+        }
+        
+        // Chat functionality
+        const messageForm = document.getElementById('message-form');
+        const messageInput = document.getElementById('message-input');
+        const messagesContainer = document.getElementById('messages');
+        
+        // Check if we're joining an existing chat
+        if (window.location.search.includes('join=')) {
+            const params = new URLSearchParams(window.location.search);
+            const joinUsername = params.get('join');
+            displaySystemMessage(`${joinUsername} has joined the chat`);
+            
+            // Clean the URL
+            window.history.replaceState({}, document.title, window.location.pathname + window.location.hash);
+        }
+        
+        messageForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const message = messageInput.value;
+            if (message.trim() === '') return;
+            
+            // Display the message
+            displayMessage(username, message, true);
+            messageInput.value = '';
+            
+            // In a real app, you would send this to a server here
+        });
+        
+        function displayMessage(sender, message, isSent) {
+            const messageElement = document.createElement('div');
+            messageElement.classList.add('message');
+            if (isSent) {
+                messageElement.classList.add('sent');
+            }
+            messageElement.innerHTML = `<span class="user-name">${sender}:</span> ${message}`;
+            messagesContainer.appendChild(messageElement);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+        
+        function displaySystemMessage(message) {
+            const messageElement = document.createElement('div');
+            messageElement.classList.add('message');
+            messageElement.style.textAlign = 'center';
+            messageElement.style.fontStyle = 'italic';
+            messageElement.style.color = '#666';
+            messageElement.textContent = message;
+            messagesContainer.appendChild(messageElement);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+        
+        // Demo: Simulate someone joining
+        setTimeout(() => {
+            if (!window.location.search.includes('join=')) {
+                displaySystemMessage("Tip: Share the invite link with friends to chat with them!");
+            }
+        }, 2000);
+    </script>
+</body>
+</html>
